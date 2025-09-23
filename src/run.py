@@ -26,25 +26,38 @@ def main():
         if params.task == "tile":
             logger.info("Running tiling & subsampling only")
             result = subprocess.run(
-                ["bash", "tiling_main.sh", input_file],
+                ["bash", "/src/tiling_main.sh", input_file],
                 check=True,
                 text=True,
                 env=env,
+                cwd="/src/",
             )
             logger.info("Tiling completed successfully")
 
             # Create zip file for tiling results
-            with zipfile.ZipFile("/out/prepared_files.zip", "w") as zipf:
-                zipf.write("/out/00_original", "00_original")
-                zipf.write("/out/01_subsampled", "01_subsampled")
-                zipf.write("/out/02_input_SAT", "02_input_SAT")
+            logger.info("Creating zip file with tiling results...")
+            with zipfile.ZipFile("prepared_files.zip", "w") as zipf:  # Changed from "/out/prepared_files.zip" to "prepared_files.zip"
+                # Add all files from each directory recursively
+                directories_to_zip = ["/out/00_original", "/out/01_subsampled", "/out/02_input_SAT"]
+
+                for directory in directories_to_zip:
+                    if os.path.exists(directory):
+                        for root, dirs, files in os.walk(directory):
+                            for file in files:
+                                file_path = os.path.join(root, file)
+                                # Create relative path from /out/ for the archive
+                                arcname = os.path.relpath(file_path, "/out")
+                                zipf.write(file_path, arcname)
+                                logger.info(f"Added to zip: {arcname}")
+                    else:
+                        logger.warning(f"Directory {directory} does not exist")
 
             logger.info("Zip file created successfully")
 
         elif params.task == "merge":
             logger.info("Running merge task and remapping to original resolution")
 
-            with zipfile.ZipFile("/in/processed_files.zip", "r") as zf:
+            with zipfile.ZipFile(input_file, "r") as zf:
                 zf.extractall("/out")
             logger.info("Unzip completed successfully")
 
@@ -76,7 +89,7 @@ def main():
             # Set up paths for remapping
             original_file = "/out/00_original/input.laz"  # Original high-res file
             subsampled_file = "/out/04_merged/merged_pc.laz"  # Merged subsampled file with predictions
-            remapped_output = "/out/final_pc.laz"  # Final output
+            remapped_output = "final_pc.laz"  # Final output
 
             remap_main(
                 original_file=original_file,

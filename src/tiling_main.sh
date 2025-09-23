@@ -4,24 +4,21 @@ ulimit -v 188743680  # 200 GB in kilobytes (200 * 1024 * 1024)
 
 # Get the input file argument
 INPUT_FILE=$1
-
-# Get basename without extension
-BASENAME=$(basename "$INPUT_FILE" .laz)
-
+ORIGINAL_FILE=/out/00_original/input.laz
 
 echo "Starting pipeline..." 
 
 echo "[Step 0.5] Copying original file to /out/00_original"
 mkdir -p /out/00_original
-cp "$INPUT_FILE" /out/00_original/${BASENAME}.laz
+cp "$INPUT_FILE" "$ORIGINAL_FILE"
 
 echo "[Step 1] Subsampling input file to 10cm: $INPUT_FILE ..." 
 
 mkdir -p /out/01_subsampled
 # Step 0: Subsample the input point cloud to 10 cm
-SUBSAMPLED_10cm_FILE=/out/01_subsampled/${BASENAME}_subsampled_10cm.laz
+SUBSAMPLED_10cm_FILE=/out/01_subsampled/input_subsampled_10cm.laz
 
-pdal translate "$INPUT_FILE" "${SUBSAMPLED_10cm_FILE}" --json='{ 
+pdal translate "/out/00_original/input.laz" "${SUBSAMPLED_10cm_FILE}" --json='{ 
     "pipeline": [ 
         { 
             "type": "filters.voxelcentroidnearestneighbor", 
