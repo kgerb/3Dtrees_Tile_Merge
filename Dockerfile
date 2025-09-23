@@ -55,6 +55,7 @@ RUN pip install \
 ENV EGL_PLATFORM=surfaceless
 
 RUN mkdir -p /src && mkdir -p /in && mkdir -p /out
+RUN chmod 777 /src /in /out
 COPY ./src /src
 
 WORKDIR /src
