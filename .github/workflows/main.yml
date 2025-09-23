@@ -40,23 +40,6 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      # Add this step before the heavy Docker build to free disk space
-      - name: Free space
-        run: |
-          sudo rm -rf \
-            /opt/hostedtoolcache \
-            /opt/google/chrome \
-            /opt/microsoft/msedge \
-            /opt/microsoft/powershell \
-            /opt/pipx \
-            /usr/local/julia* \
-            /usr/local/lib/android \
-            /usr/local/lib/node_modules \
-            /usr/local/share/chromium \
-            /usr/local/share/powershell \
-            /usr/share/dotnet \
-            /usr/share/swift
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
