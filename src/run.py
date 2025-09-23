@@ -34,7 +34,7 @@ def main():
             logger.info("Tiling completed successfully")
 
             # Create zip file for tiling results
-            with zipfile.ZipFile(f"/out/prepared_files.zip", "w") as zipf:
+            with zipfile.ZipFile("/out/prepared_files.zip", "w") as zipf:
                 zipf.write("/out/00_original", "00_original")
                 zipf.write("/out/01_subsampled", "01_subsampled")
                 zipf.write("/out/02_input_SAT", "02_input_SAT")
@@ -58,7 +58,7 @@ def main():
             original_point_cloud = "/out/00_original/input.laz"  # Original input file
 
             os.makedirs("/out/04_merged", exist_ok=True)
-            output_file = f"/out/04_merged/merged_pc.laz"  # Output file
+            output_file = "/out/04_merged/merged_pc.laz"  # Output file
 
             merge_tiles(
                 tile_folder=tile_folder,
@@ -76,7 +76,7 @@ def main():
             # Set up paths for remapping
             original_file = "/out/00_original/input.laz"  # Original high-res file
             subsampled_file = "/out/04_merged/merged_pc.laz"  # Merged subsampled file with predictions
-            remapped_output = f"/out/final_pc.laz"  # Final output
+            remapped_output = "/out/final_pc.laz"  # Final output
 
             remap_main(
                 original_file=original_file,
