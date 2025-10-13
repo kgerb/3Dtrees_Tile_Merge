@@ -2,10 +2,9 @@ import os
 import laspy
 import numpy as np
 from scipy.spatial import KDTree
-import matplotlib.pyplot as plt
 
 
-def is_within_tile_boundary(point, tile_boundary, buffer=1.0):
+def is_within_tile_boundary(point, tile_boundary, buffer):
     """
     Check if a point is within the tile boundary, considering a buffer.
 
@@ -38,8 +37,20 @@ def find_whole_trees(tile_points, tile_pred_instance, tile_boundary, buffer=0.2)
     """
     whole_tree_ids = set()
     unique_ids = np.unique(tile_pred_instance)
+
+    # Get counts for each ID
+    unique_with_counts, counts = np.unique(tile_pred_instance, return_counts=True)
+    id_counts = dict(zip(unique_with_counts, counts))
+
+    print(f"Unique IDs in tile: {sorted(unique_ids)}")
+    print("Cluster sizes:")
+    for tree_id in sorted(unique_ids):
+        if tree_id > 0:  # Only show actual tree IDs
+            print(f"Tree ID {tree_id}: {id_counts[tree_id]} points")
+
     for tree_id in unique_ids:
-        if tree_id == 0:
+        # Skip background (0) and unassigned (-1 or any negative)
+        if tree_id <= 0:
             continue
         tree_points = tile_points[tile_pred_instance == tree_id]
         if all(
@@ -108,7 +119,14 @@ def reassign_small_clusters(
 
 
 def merge_tiles(
-    tile_folder, original_point_cloud, output_file, buffer=0, min_cluster_size=300
+    tile_folder,
+    original_point_cloud,
+    output_file,
+    buffer,
+    min_cluster_size,
+    initial_radius,
+    max_radius,
+    radius_step,
 ):
     """
     Merge predicted instance and semantic labels from tile files back into the original point cloud.
@@ -122,6 +140,9 @@ def merge_tiles(
         output_file (str): Path to save the merged point cloud.
         buffer (float): Buffer distance for whole-tree assignment.
         min_cluster_size (int): Minimum cluster size for reassignment.
+        initial_radius (float): Initial search radius for point reassignment.
+        max_radius (float): Maximum search radius for point reassignment.
+        radius_step (float): Radius increment step for point reassignment.
     """
     print("Loading the original point cloud...")
     original_las = laspy.read(original_point_cloud)
@@ -132,7 +153,7 @@ def merge_tiles(
     merged_pred_instance = np.full(len(original_points), -1, dtype=int)
     merged_pred_semantic = np.full(len(original_points), -1, dtype=int)
 
-    global_instance_counter = 1  # Start from 1 to avoid conflicts with -1
+    global_instance_counter = 0  # Start from 0
 
     print("Processing tiles...")
     tile_files = [
@@ -204,6 +225,7 @@ def merge_tiles(
         )
 
         print(f"Found {len(whole_tree_ids)} whole trees in tile {filename}")
+        print(f"Whole tree IDs: {sorted(whole_tree_ids)}")
 
         for i, idx in enumerate(indices):
             if reindexed_pred_instance[i] in whole_tree_ids:
@@ -212,7 +234,14 @@ def merge_tiles(
 
     # Rest of the function remains the same...
     print("Reassigning small PredInstance clusters...")
-    reassign_small_clusters(merged_pred_instance, original_points, min_cluster_size)
+    reassign_small_clusters(
+        merged_pred_instance,
+        original_points,
+        min_cluster_size,
+        initial_radius,
+        max_radius,
+        radius_step,
+    )
 
     # Rest of the function remains the same...
     print("Saving merged point cloud...")
@@ -259,7 +288,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--buffer",
         type=float,
-        default=0,
+        default=0.2,
         help="Buffer distance to consider for whole trees.",
     )
     parser.add_argument(
@@ -267,6 +296,24 @@ if __name__ == "__main__":
         type=int,
         default=300,
         help="Minimum cluster size for PredInstance reassignment.",
+    )
+    parser.add_argument(
+        "--initial_radius",
+        type=float,
+        default=1.0,
+        help="Initial search radius for point reassignment.",
+    )
+    parser.add_argument(
+        "--max_radius",
+        type=float,
+        default=5.0,
+        help="Maximum search radius for point reassignment.",
+    )
+    parser.add_argument(
+        "--radius_step",
+        type=float,
+        default=1.0,
+        help="Radius increment step for point reassignment.",
     )
     args = parser.parse_args()
 
@@ -276,4 +323,7 @@ if __name__ == "__main__":
         args.output_file,
         args.buffer,
         args.min_cluster_size,
+        args.initial_radius,
+        args.max_radius,
+        args.radius_step,
     )

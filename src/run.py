@@ -3,34 +3,47 @@ import subprocess
 import sys
 import os
 import zipfile
-from pathlib import Path
+import time
 from parameters import Parameters
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+# Add console handler
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 
 def main():
+    start_time = time.time()
     params = Parameters()
     logger.info(f"Parameters: {params}")
 
     # Prepare arguments for tiling_main.sh
     input_file = params.dataset_path
-    # Set environment variables that tiling_main.sh might need
+    # Set environment variables that tiling_main.sh needs
     env = os.environ.copy()
-    env["TILE_SIZE"] = str(params.tile_size)
-    env["OVERLAP"] = str(params.overlap)
-    env["TILING_THRESHOLD"] = str(int(params.tiling_threshold * 1024 * 1024 * 1024))
-    env["TILE_AGAIN_THRESHOLD"] = str(
-        int(params.tiling_threshold * 1024 * 1024 * 1024 * (66 / 100))
-    )
-    env["POINTS_THRESHOLD"] = str(params.points_threshold)
+
+    if params.task == "tile":
+        env["TILE_SIZE"] = str(params.tile_size)
+        env["OVERLAP"] = str(params.overlap)
+        env["TILING_THRESHOLD"] = str(int(params.tiling_threshold * 1024 * 1024 * 1024))
+        env["TILE_AGAIN_THRESHOLD"] = str(
+            int(params.tiling_threshold * 1024 * 1024 * 1024 * (66 / 100))
+        )
+        env["SUBSAMPLING_RESOLUTION"] = str(
+            f"{params.subsampling_resolution / 100:.2f}"
+        )
+        env["POINTS_THRESHOLD"] = str(params.points_threshold)
+        env["NUMBER_OF_THREADS"] = str(params.number_of_threads)
 
     # Call tiling_main.sh with appropriate arguments
     try:
         if params.task == "tile":
             logger.info("Running tiling & subsampling only")
-            result = subprocess.run(
+            subprocess.run(
                 ["bash", "/src/tiling_main.sh", input_file],
                 check=True,
                 text=True,
@@ -90,8 +103,11 @@ def main():
                 tile_folder=tile_folder,
                 original_point_cloud=subsampled_file,
                 output_file=output_file,
-                buffer=0,
-                min_cluster_size=300,
+                buffer=params.buffer,
+                min_cluster_size=params.min_cluster_size,
+                initial_radius=params.initial_radius,
+                max_radius=params.max_radius,
+                radius_step=params.radius_step,
             )
             logger.info("Merge completed successfully")
 
@@ -121,6 +137,9 @@ def main():
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         sys.exit(1)
+
+    end_time = time.time()
+    logger.info(f"Total time taken: {end_time - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":
