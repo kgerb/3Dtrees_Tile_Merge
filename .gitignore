@@ -1,3 +1,5 @@
 /src/__pycache__
 /src/run_docker.sh
 /src/prepared_files.zip
+/in/
+/out/

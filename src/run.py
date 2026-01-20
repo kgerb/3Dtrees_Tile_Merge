@@ -118,7 +118,7 @@ def main():
             # Set up paths for remapping
             original_file = "/out/00_original/input.laz"  # Original high-res file
             subsampled_file = "/out/04_merged/merged_pc.laz"  # Merged subsampled file with predictions
-            remapped_output = "final_pc.laz"  # Final output
+            remapped_output = "segmented.laz"  # Final output
 
             remap_main(
                 original_file=original_file,
