@@ -72,7 +72,7 @@ class Parameters(BaseSettings):
         alias=AliasChoices("radius-step", "radius_step"),
     )
     buffer: Optional[float] = Field(
-        10.0,
+        0.0,
         description="Buffer [m] (only required for 'merge' task)",
         alias=AliasChoices("buffer", "buffer"),
     )

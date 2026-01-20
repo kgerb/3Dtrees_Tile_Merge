@@ -22,7 +22,7 @@ def is_within_tile_boundary(point, tile_boundary, buffer):
     )
 
 
-def find_whole_trees(tile_points, tile_pred_instance, tile_boundary, buffer=0.2):
+def find_whole_trees(tile_points, tile_pred_instance, tile_boundary, buffer):
     """
     Identify tree instance IDs whose points are entirely within the tile boundary (with buffer).
 
@@ -290,7 +290,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--buffer",
         type=float,
-        default=0.2,
+        default=0,
         help="Buffer distance to consider for whole trees.",
     )
     parser.add_argument(
